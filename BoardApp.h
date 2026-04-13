@@ -23,6 +23,10 @@ struct GLFWwindow;
 class BoardApp {
 public:
     static constexpr int NUM_BOARDS = 5;
+    // WebSocket server integration
+    void startWebSocketServer(int port);
+    void stopWebSocketServer();
+    bool isWebSocketServerRunning() const;
 
     BoardApp();
 
