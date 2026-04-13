@@ -718,6 +718,27 @@ void BoardApp::renderNetworkPanel() {
         }
     }
 
+    // --- WebSocket Server Controls ---
+    static int ws_port = 9002;
+    ImGui::Separator();
+    ImGui::Text("WebSocket Server (for web clients):");
+    ImGui::PushItemWidth(100);
+    ImGui::InputInt("Port##WS", &ws_port);
+    ImGui::PopItemWidth();
+    ImGui::SameLine();
+    if (!isWebSocketServerRunning()) {
+        if (ImGui::Button("Start WebSocket Server")) {
+            startWebSocketServer(ws_port);
+        }
+    } else {
+        ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.2f, 1.0f), "Running on port %d", ws_port);
+        ImGui::SameLine();
+        if (ImGui::Button("Stop WebSocket Server")) {
+            stopWebSocketServer();
+        }
+    }
+    ImGui::Separator();
+
     ImGui::End();
 }
 

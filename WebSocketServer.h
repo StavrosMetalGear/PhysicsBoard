@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 #include <functional>
-
+#include <uWebSockets/App.h>
 // Forward declaration for Board and Stroke
 class Board;
 struct Stroke;

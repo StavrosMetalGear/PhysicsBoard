@@ -70,6 +70,7 @@ set(SOURCES
     NetworkSession.cpp
     ProjectileSimulator.cpp
     PhysicsToolbox.cpp
+    BoardAppWebSocket.cpp
 )
 
 set(HEADERS
@@ -85,7 +86,11 @@ set(HEADERS
 # ── Executable ───────────────────────────────────────────────────────────────
 add_executable(PhysicsBoard ${SOURCES} ${HEADERS})
 
-target_include_directories(PhysicsBoard PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(PhysicsBoard PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${uwebsockets_SOURCE_DIR}/src
+    ${uwebsockets_SOURCE_DIR}/deps
+)
 target_link_libraries(PhysicsBoard PRIVATE imgui_lib implot_lib OpenGL::GL)
 
 # ── Platform-specific settings ───────────────────────────────────────────────
@@ -98,5 +103,12 @@ else()
     target_compile_options(PhysicsBoard PRIVATE -Wall -Wextra -pedantic)
 endif()
 
+
 # ── uWebSockets integration ─────────────────────────────────────────────────
-include(cmake/uwebsockets.cmake)
+include(FetchContent)
+FetchContent_Declare(
+    uwebsockets
+    GIT_REPOSITORY https://github.com/uNetworking/uWebSockets.git
+    GIT_TAG        v20.62.0
+)
+FetchContent_MakeAvailable(uwebsockets)
