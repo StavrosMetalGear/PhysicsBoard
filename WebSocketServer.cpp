@@ -21,16 +21,33 @@ void WebSocketServer::start(int port,
     if (m_running) return;
     m_running = true;
     m_port = port;
-    m_thread = std::thread([=]() {
+    m_thread = std::thread([this]() {
         uWS::App()
         .ws<false>("/ws", {
-            .open = [](auto* ws) {
-                // On connect: send full board and permission
+            .open = [this](auto* ws) {
+                {
+                    std::lock_guard<std::mutex> lock(m_clientsMutex);
+                    m_clients.push_back(ws);
+                }
+                // Send current board state and permission
+                broadcastBoard(m_getBoard());
+                broadcastPermission(m_getDrawPermission());
             },
-            .message = [=](auto* ws, std::string_view msg, uWS::OpCode) {
-                // On message: parse JSON, handle stroke or permission
+            .message = [this](auto* ws, std::string_view msg, uWS::OpCode) {
+                try {
+                    json j = json::parse(msg);
+                    if (j.contains("type") && j["type"] == "stroke" && j.contains("stroke")) {
+                        Stroke s = j["stroke"].get<Stroke>();
+                        if (m_onStroke) m_onStroke(s);
+                        broadcastStroke(s);
+                    }
+                } catch (std::exception& e) {
+                    std::cerr << "WebSocketServer: Failed to parse message: " << e.what() << std::endl;
+                }
             },
-            .close = [](auto*, int, std::string_view) {
+            .close = [this](auto* ws, int, std::string_view) {
+                std::lock_guard<std::mutex> lock(m_clientsMutex);
+                m_clients.erase(std::remove(m_clients.begin(), m_clients.end(), ws), m_clients.end());
             }
         })
         .get("/", [](auto* res, auto*) {
@@ -51,11 +68,11 @@ function sendStroke(stroke) { ws.send(JSON.stringify({type:'stroke', stroke})); 
 )";
             res->writeHeader("Content-Type", "text/html")->end(html);
         })
-        .listen(port, [=](auto* token) {
+        .listen(m_port, [this](auto* token) {
             if (!token) {
-                printf("[WebSocketServer] Failed to listen on port %d\n", port);
+                printf("[WebSocketServer] Failed to listen on port %d\n", m_port);
             } else {
-                printf("[WebSocketServer] Listening on port %d\n", port);
+                printf("[WebSocketServer] Listening on port %d\n", m_port);
             }
         })
         .run();
@@ -67,6 +84,35 @@ void WebSocketServer::stop() {
     if (m_thread.joinable()) m_thread.join();
 }
 
-void WebSocketServer::broadcastStroke(const Stroke&) {}
-void WebSocketServer::broadcastBoard(const Board&) {}
-void WebSocketServer::broadcastPermission(bool) {}
+void WebSocketServer::broadcastStroke(const Stroke& stroke) {
+    json j;
+    j["type"] = "stroke";
+    j["stroke"] = stroke;
+    std::string msg = j.dump();
+    std::lock_guard<std::mutex> lock(m_clientsMutex);
+    for (auto* ws : m_clients) {
+        ws->send(msg, uWS::OpCode::TEXT);
+    }
+}
+
+void WebSocketServer::broadcastBoard(const Board& board) {
+    json j;
+    j["type"] = "board";
+    j["strokes"] = board.getStrokes();
+    std::string msg = j.dump();
+    std::lock_guard<std::mutex> lock(m_clientsMutex);
+    for (auto* ws : m_clients) {
+        ws->send(msg, uWS::OpCode::TEXT);
+    }
+}
+
+void WebSocketServer::broadcastPermission(bool allowed) {
+    json j;
+    j["type"] = "permission";
+    j["allowed"] = allowed;
+    std::string msg = j.dump();
+    std::lock_guard<std::mutex> lock(m_clientsMutex);
+    for (auto* ws : m_clients) {
+        ws->send(msg, uWS::OpCode::TEXT);
+    }
+}

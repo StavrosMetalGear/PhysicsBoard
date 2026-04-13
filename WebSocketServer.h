@@ -33,5 +33,11 @@ private:
     std::thread m_thread;
     std::atomic<bool> m_running;
     int m_port;
-    // ... internal state ...
+    // Track connected clients
+    std::vector<uWS::WebSocket<false, true>*> m_clients;
+    std::mutex m_clientsMutex;
+    // Store callbacks
+    std::function<const Board&()> m_getBoard;
+    std::function<void(const Stroke&)> m_onStroke;
+    std::function<bool()> m_getDrawPermission;
 };
