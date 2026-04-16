@@ -4,6 +4,8 @@
 #include <string>
 #include <cstdint>
 
+#include <nlohmann/json.hpp>
+
 // ── Board ───────────────────────────────────────────────────────────────────
 // Represents a single whiteboard with strokes (drawings).
 // Each board has its own stroke list, undo/redo history, and background.
@@ -21,11 +23,11 @@ enum class ToolType {
 };
 
 enum class BackgroundStyle {
-    DarkGrid,      // Dark background with subtle grid lines
-    WhiteLines,    // White background with horizontal ruled lines (notebook)
-    BluePrint,     // Blue background with white engineering grid
-    DotGrid,       // Light cream background with dot grid pattern
-    Plain          // Plain white background, no grid
+    DarkGrid,
+    WhiteLines,
+    BluePrint,
+    DotGrid,
+    Plain
 };
 
 struct Point {
@@ -33,12 +35,47 @@ struct Point {
 };
 
 struct Stroke {
-    ToolType             tool;
-    std::vector<Point>   points;       // freehand: many points; shapes: 2 points (start, end)
-    uint32_t             color;        // ImGui packed color (ABGR)
-    float                thickness;
-    std::string          text;         // only used for ToolType::Text
+    ToolType           tool;
+    std::vector<Point> points;      // freehand: many points; shapes: 2 points (start, end)
+    uint32_t           color;       // ImGui packed color (ABGR)
+    float              thickness;
+    std::string        text;        // only used for ToolType::Text
 };
+
+// JSON conversion for Point
+inline void to_json(nlohmann::json& j, const Point& p) {
+    j = nlohmann::json{
+        {"x", p.x},
+        {"y", p.y}
+    };
+}
+
+inline void from_json(const nlohmann::json& j, Point& p) {
+    j.at("x").get_to(p.x);
+    j.at("y").get_to(p.y);
+}
+
+// JSON conversion for Stroke
+inline void to_json(nlohmann::json& j, const Stroke& s) {
+    j = nlohmann::json{
+        {"tool", static_cast<int>(s.tool)},
+        {"points", s.points},
+        {"color", s.color},
+        {"thickness", s.thickness},
+        {"text", s.text}
+    };
+}
+
+inline void from_json(const nlohmann::json& j, Stroke& s) {
+    int toolValue = 0;
+    j.at("tool").get_to(toolValue);
+    s.tool = static_cast<ToolType>(toolValue);
+
+    j.at("points").get_to(s.points);
+    j.at("color").get_to(s.color);
+    j.at("thickness").get_to(s.thickness);
+    j.at("text").get_to(s.text);
+}
 
 class Board {
 public:
@@ -78,12 +115,12 @@ public:
     static Stroke deserializeStroke(const uint8_t* data, size_t size);
 
 private:
-    std::string                 m_name;
-    std::vector<Stroke>         m_strokes;
+    std::string                     m_name;
+    std::vector<Stroke>             m_strokes;
     std::vector<std::vector<Stroke>> m_undoStack;
     std::vector<std::vector<Stroke>> m_redoStack;
-    uint32_t                    m_bgColor;
-    BackgroundStyle             m_bgStyle;
+    uint32_t                        m_bgColor;
+    BackgroundStyle                 m_bgStyle;
 
     void saveUndoState();
 };
