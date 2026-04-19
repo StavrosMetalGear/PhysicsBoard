@@ -1,0 +1,21 @@
+# ninja log v6
+82	157	1776601097424132200	glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-mkdir	84b4dbee9bb8f765
+82	157	1776601097424132200	/mnt/c/Users/stavr/source/repos/PhysicsBoard/build-linux/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-mkdir	84b4dbee9bb8f765
+171	23612	1776601120878552500	glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-download	aef990836e82c937
+171	23612	1776601120878552500	/mnt/c/Users/stavr/source/repos/PhysicsBoard/build-linux/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-download	aef990836e82c937
+23620	24018	1776601120894554000	glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-update	9b06517e3d1dba67
+23620	24018	1776601120894554000	/mnt/c/Users/stavr/source/repos/PhysicsBoard/build-linux/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-update	9b06517e3d1dba67
+24018	24056	1776601121323071400	glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-patch	1398ca35a1c3cee9
+24018	24056	1776601121323071400	/mnt/c/Users/stavr/source/repos/PhysicsBoard/build-linux/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-patch	1398ca35a1c3cee9
+24064	24104	1776601121369845900	glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-configure	6a51f3bd111456ee
+24064	24104	1776601121369845900	/mnt/c/Users/stavr/source/repos/PhysicsBoard/build-linux/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-configure	6a51f3bd111456ee
+24112	24150	1776601121417292200	glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-build	76dc366a3df7cc51
+24112	24150	1776601121417292200	/mnt/c/Users/stavr/source/repos/PhysicsBoard/build-linux/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-build	76dc366a3df7cc51
+24159	24205	1776601121471558000	glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-install	66157a00079cdc4b
+24159	24205	1776601121471558000	/mnt/c/Users/stavr/source/repos/PhysicsBoard/build-linux/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-install	66157a00079cdc4b
+24213	24258	1776601121524608200	glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-test	6d6d5aa946d22a82
+24213	24258	1776601121524608200	/mnt/c/Users/stavr/source/repos/PhysicsBoard/build-linux/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-test	6d6d5aa946d22a82
+24267	24324	1776601121591153300	CMakeFiles/glfw-populate-complete	2143449ffa550ae
+24267	24324	1776601121591153300	glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-done	2143449ffa550ae
+24267	24324	1776601121591153300	/mnt/c/Users/stavr/source/repos/PhysicsBoard/build-linux/_deps/glfw-subbuild/CMakeFiles/glfw-populate-complete	2143449ffa550ae
+24267	24324	1776601121591153300	/mnt/c/Users/stavr/source/repos/PhysicsBoard/build-linux/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-done	2143449ffa550ae

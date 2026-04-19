@@ -61,36 +61,67 @@ FetchContent_Declare(
     uwebsockets
     GIT_REPOSITORY https://github.com/uNetworking/uWebSockets.git
     GIT_TAG        v20.62.0
-    GIT_SUBMODULES_RECURSE TRUE
+    GIT_SUBMODULES uSockets
 )
 FetchContent_MakeAvailable(uwebsockets)
 
-# uSockets native library (Windows, non-SSL, ASIO backend using Boost.Asio)
 set(USOCKETS_DIR ${uwebsockets_SOURCE_DIR}/uSockets/src)
-set(BOOST_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/boost")
 
-add_library(usockets STATIC
-    ${USOCKETS_DIR}/context.c
-    ${USOCKETS_DIR}/loop.c
-    ${USOCKETS_DIR}/socket.c
-    ${USOCKETS_DIR}/udp.c
-    ${USOCKETS_DIR}/bsd.c
-    ${USOCKETS_DIR}/eventing/asio.cpp
-)
+# --- Platform-specific uSockets backend selection ---
+if(WIN32)
+    message(STATUS "Configuring uSockets for Windows with ASIO backend")
 
-target_include_directories(usockets PUBLIC
-    ${USOCKETS_DIR}
-    ${BOOST_ROOT}
-)
+    # Your local Boost superproject checkout
+    set(BOOST_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/boost/third_party/boost")
+    file(GLOB BOOST_INCLUDE_DIRS "${BOOST_ROOT}/libs/*/include")
 
-target_compile_definitions(usockets PRIVATE
-    LIBUS_USE_ASIO
-    LIBUS_NO_SSL
-)
+    add_library(usockets STATIC
+        ${USOCKETS_DIR}/context.c
+        ${USOCKETS_DIR}/loop.c
+        ${USOCKETS_DIR}/socket.c
+        ${USOCKETS_DIR}/udp.c
+        ${USOCKETS_DIR}/bsd.c
+        ${USOCKETS_DIR}/eventing/asio.cpp
+    )
 
-target_link_libraries(usockets PUBLIC
-    ws2_32
-)
+    target_include_directories(usockets PUBLIC
+        ${USOCKETS_DIR}
+        ${BOOST_INCLUDE_DIRS}
+    )
+
+    target_compile_definitions(usockets PRIVATE
+        LIBUS_USE_ASIO
+        LIBUS_NO_SSL
+    )
+
+    target_link_libraries(usockets PUBLIC
+        ws2_32
+    )
+
+elseif(UNIX)
+    message(STATUS "Configuring uSockets for UNIX/POSIX with epoll backend")
+
+    add_library(usockets STATIC
+        ${USOCKETS_DIR}/context.c
+        ${USOCKETS_DIR}/loop.c
+        ${USOCKETS_DIR}/socket.c
+        ${USOCKETS_DIR}/udp.c
+        ${USOCKETS_DIR}/bsd.c
+        ${USOCKETS_DIR}/eventing/epoll_kqueue.c
+    )
+
+    target_include_directories(usockets PUBLIC
+        ${USOCKETS_DIR}
+    )
+
+    target_compile_definitions(usockets PRIVATE
+        LIBUS_USE_EPOLL
+        LIBUS_NO_SSL
+    )
+
+else()
+    message(FATAL_ERROR "Unsupported platform for manual uSockets setup")
+endif()
 
 # zlib
 FetchContent_Declare(
@@ -140,8 +171,13 @@ target_include_directories(PhysicsBoard PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${uwebsockets_SOURCE_DIR}/src
     ${uwebsockets_SOURCE_DIR}/uSockets/src
-    ${BOOST_ROOT}
 )
+
+if(WIN32)
+    target_include_directories(PhysicsBoard PRIVATE
+        ${BOOST_INCLUDE_DIRS}
+    )
+endif()
 
 target_link_libraries(PhysicsBoard PRIVATE
     imgui_lib
@@ -162,10 +198,16 @@ if(MSVC)
     )
     target_compile_options(PhysicsBoard PRIVATE /W3)
     target_link_libraries(PhysicsBoard PRIVATE ws2_32)
-else()
+
+elseif(UNIX)
     target_compile_definitions(PhysicsBoard PRIVATE
-        LIBUS_USE_ASIO
+        LIBUS_USE_EPOLL
         LIBUS_NO_SSL
     )
     target_compile_options(PhysicsBoard PRIVATE -Wall -Wextra -pedantic)
+
+else()
+    target_compile_definitions(PhysicsBoard PRIVATE
+        LIBUS_NO_SSL
+    )
 endif()

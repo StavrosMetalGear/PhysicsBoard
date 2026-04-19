@@ -1,0 +1,3 @@
+/mnt/c/Users/stavr/source/repos/PhysicsBoard/build-linux/_deps/uwebsockets-subbuild/CMakeFiles/uwebsockets-populate.dir
+/mnt/c/Users/stavr/source/repos/PhysicsBoard/build-linux/_deps/uwebsockets-subbuild/CMakeFiles/edit_cache.dir
+/mnt/c/Users/stavr/source/repos/PhysicsBoard/build-linux/_deps/uwebsockets-subbuild/CMakeFiles/rebuild_cache.dir

@@ -1,0 +1,14 @@
+# Target labels
+ uwebsockets-populate
+# Source files and their labels
+/mnt/c/Users/stavr/source/repos/PhysicsBoard/build-linux/_deps/uwebsockets-subbuild/CMakeFiles/uwebsockets-populate
+/mnt/c/Users/stavr/source/repos/PhysicsBoard/build-linux/_deps/uwebsockets-subbuild/CMakeFiles/uwebsockets-populate.rule
+/mnt/c/Users/stavr/source/repos/PhysicsBoard/build-linux/_deps/uwebsockets-subbuild/CMakeFiles/uwebsockets-populate-complete.rule
+/mnt/c/Users/stavr/source/repos/PhysicsBoard/build-linux/_deps/uwebsockets-subbuild/uwebsockets-populate-prefix/src/uwebsockets-populate-stamp/uwebsockets-populate-build.rule
+/mnt/c/Users/stavr/source/repos/PhysicsBoard/build-linux/_deps/uwebsockets-subbuild/uwebsockets-populate-prefix/src/uwebsockets-populate-stamp/uwebsockets-populate-configure.rule
+/mnt/c/Users/stavr/source/repos/PhysicsBoard/build-linux/_deps/uwebsockets-subbuild/uwebsockets-populate-prefix/src/uwebsockets-populate-stamp/uwebsockets-populate-download.rule
+/mnt/c/Users/stavr/source/repos/PhysicsBoard/build-linux/_deps/uwebsockets-subbuild/uwebsockets-populate-prefix/src/uwebsockets-populate-stamp/uwebsockets-populate-install.rule
+/mnt/c/Users/stavr/source/repos/PhysicsBoard/build-linux/_deps/uwebsockets-subbuild/uwebsockets-populate-prefix/src/uwebsockets-populate-stamp/uwebsockets-populate-mkdir.rule
+/mnt/c/Users/stavr/source/repos/PhysicsBoard/build-linux/_deps/uwebsockets-subbuild/uwebsockets-populate-prefix/src/uwebsockets-populate-stamp/uwebsockets-populate-patch.rule
+/mnt/c/Users/stavr/source/repos/PhysicsBoard/build-linux/_deps/uwebsockets-subbuild/uwebsockets-populate-prefix/src/uwebsockets-populate-stamp/uwebsockets-populate-test.rule
+/mnt/c/Users/stavr/source/repos/PhysicsBoard/build-linux/_deps/uwebsockets-subbuild/uwebsockets-populate-prefix/src/uwebsockets-populate-stamp/uwebsockets-populate-update.rule
