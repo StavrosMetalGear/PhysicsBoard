@@ -65,8 +65,9 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(uwebsockets)
 
-# uSockets native library (minimal Windows, non-SSL)
+# uSockets native library (Windows, non-SSL, ASIO backend using Boost.Asio)
 set(USOCKETS_DIR ${uwebsockets_SOURCE_DIR}/uSockets/src)
+set(BOOST_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/boost")
 
 add_library(usockets STATIC
     ${USOCKETS_DIR}/context.c
@@ -79,12 +80,12 @@ add_library(usockets STATIC
 
 target_include_directories(usockets PUBLIC
     ${USOCKETS_DIR}
+    ${BOOST_ROOT}
 )
 
 target_compile_definitions(usockets PRIVATE
     LIBUS_USE_ASIO
     LIBUS_NO_SSL
-    ASIO_STANDALONE
 )
 
 target_link_libraries(usockets PUBLIC
@@ -139,6 +140,7 @@ target_include_directories(PhysicsBoard PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${uwebsockets_SOURCE_DIR}/src
     ${uwebsockets_SOURCE_DIR}/uSockets/src
+    ${BOOST_ROOT}
 )
 
 target_link_libraries(PhysicsBoard PRIVATE
@@ -154,6 +156,7 @@ if(MSVC)
     target_compile_definitions(PhysicsBoard PRIVATE
         _USE_MATH_DEFINES
         NOMINMAX
+        LIBUS_USE_ASIO
         LIBUS_NO_SSL
         _CRT_SECURE_NO_WARNINGS
     )
@@ -161,6 +164,7 @@ if(MSVC)
     target_link_libraries(PhysicsBoard PRIVATE ws2_32)
 else()
     target_compile_definitions(PhysicsBoard PRIVATE
+        LIBUS_USE_ASIO
         LIBUS_NO_SSL
     )
     target_compile_options(PhysicsBoard PRIVATE -Wall -Wextra -pedantic)
