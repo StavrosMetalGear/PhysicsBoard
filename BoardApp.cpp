@@ -119,8 +119,9 @@ void BoardApp::render() {
     ImGui::SetNextWindowPos(vp->WorkPos);
     ImGui::SetNextWindowSize(vp->WorkSize);
 
-    // In overlay mode, make the main window background transparent
-    if (m_overlayMode) {
+    // Snapshot the style state for this frame
+    bool overlayStylePushed = m_overlayMode;
+    if (overlayStylePushed) {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0, 0, 0, 0));
     }
 
@@ -146,15 +147,15 @@ void BoardApp::render() {
             if (ImGui::BeginMenu("Board Background")) {
                 Board& bg = m_boards[m_activeBoard];
                 BackgroundStyle cur = bg.getBackgroundStyle();
-                if (ImGui::RadioButton("Dark Grid",    cur == BackgroundStyle::DarkGrid))
+                if (ImGui::RadioButton("Dark Grid", cur == BackgroundStyle::DarkGrid))
                     bg.setBackgroundStyle(BackgroundStyle::DarkGrid);
-                if (ImGui::RadioButton("White Lines",  cur == BackgroundStyle::WhiteLines))
+                if (ImGui::RadioButton("White Lines", cur == BackgroundStyle::WhiteLines))
                     bg.setBackgroundStyle(BackgroundStyle::WhiteLines);
-                if (ImGui::RadioButton("Blueprint",    cur == BackgroundStyle::BluePrint))
+                if (ImGui::RadioButton("Blueprint", cur == BackgroundStyle::BluePrint))
                     bg.setBackgroundStyle(BackgroundStyle::BluePrint);
-                if (ImGui::RadioButton("Dot Grid",     cur == BackgroundStyle::DotGrid))
+                if (ImGui::RadioButton("Dot Grid", cur == BackgroundStyle::DotGrid))
                     bg.setBackgroundStyle(BackgroundStyle::DotGrid);
-                if (ImGui::RadioButton("Plain White",  cur == BackgroundStyle::Plain))
+                if (ImGui::RadioButton("Plain White", cur == BackgroundStyle::Plain))
                     bg.setBackgroundStyle(BackgroundStyle::Plain);
                 ImGui::EndMenu();
             }
@@ -186,11 +187,10 @@ void BoardApp::render() {
 
     ImGui::End();
 
-    if (m_overlayMode) {
-        ImGui::PopStyleColor(); // WindowBg
+    if (overlayStylePushed) {
+        ImGui::PopStyleColor();
     }
 
-    // Sub-windows
     if (m_showPlotter)     m_plotter.render(&m_showPlotter);
     if (m_showProjectile)  m_projectile.render(&m_showProjectile);
     if (m_showToolbox)     m_toolbox.render(&m_showToolbox);
