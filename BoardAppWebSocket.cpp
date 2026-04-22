@@ -1,20 +1,31 @@
 #include "BoardApp.h"
-#include "WebSocketServer.h"
+#include "IWebSocketServer.h"
+
+#ifdef _WIN32
+#include "WinWebSocketServer.h"
+#else
+#include "UwsWebSocketServer.h"
+#endif
+
 #include <memory>
 
-// Integration: Add a WebSocketServer to BoardApp
 namespace {
-    std::unique_ptr<WebSocketServer> g_wsServer;
+    std::unique_ptr<IWebSocketServer> g_wsServer;
 }
 
 void BoardApp::startWebSocketServer(int port) {
     if (!g_wsServer) {
-        g_wsServer = std::make_unique<WebSocketServer>();
+#ifdef _WIN32
+        g_wsServer = std::make_unique<WinWebSocketServer>();
+#else
+        g_wsServer = std::make_unique<UwsWebSocketServer>();
+#endif
+
         g_wsServer->start(
             port,
             [this]() -> const Board& { return m_boards[m_activeBoard]; },
             [this](const Stroke& s) { m_boards[m_activeBoard].addStroke(s); },
-            []() { return true; } // Allow all for now
+            []() { return true; }
         );
     }
 }

@@ -1,7 +1,5 @@
-#include "WebSocketServer.h"
-#include "Board.h"
+#include "UwsWebSocketServer.h"
 
-#include <App.h>
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
@@ -14,15 +12,16 @@
 
 using json = nlohmann::json;
 
-WebSocketServer::WebSocketServer()
+UwsWebSocketServer::UwsWebSocketServer()
     : m_running(false), m_port(0) {
 }
 
-WebSocketServer::~WebSocketServer() {
+UwsWebSocketServer::~UwsWebSocketServer() {
     stop();
 }
 
-void WebSocketServer::start(int port,
+void UwsWebSocketServer::start(
+    int port,
     std::function<const Board& ()> getBoard,
     std::function<void(const Stroke&)> onStroke,
     std::function<bool()> getDrawPermission)
@@ -75,7 +74,7 @@ void WebSocketServer::start(int port,
                         }
                     }
                     catch (const std::exception& e) {
-                        std::cerr << "WebSocketServer: Failed to parse message: "
+                        std::cerr << "UwsWebSocketServer: Failed to parse message: "
                                   << e.what() << std::endl;
                     }
                 },
@@ -121,12 +120,12 @@ function sendStroke(stroke) {
 
             .listen(m_port, [this](auto* token) {
             if (!token) {
-                std::cout << "[WebSocketServer] Failed to listen on port "
+                std::cout << "[UwsWebSocketServer] Failed to listen on port "
                     << m_port << std::endl;
                 m_running = false;
             }
             else {
-                std::cout << "[WebSocketServer] Listening on port "
+                std::cout << "[UwsWebSocketServer] Listening on port "
                     << m_port << std::endl;
             }
                 })
@@ -135,7 +134,7 @@ function sendStroke(stroke) {
         });
 }
 
-void WebSocketServer::stop() {
+void UwsWebSocketServer::stop() {
     m_running = false;
 
     if (m_thread.joinable()) {
@@ -143,7 +142,7 @@ void WebSocketServer::stop() {
     }
 }
 
-void WebSocketServer::broadcastStroke(const Stroke& stroke) {
+void UwsWebSocketServer::broadcastStroke(const Stroke& stroke) {
     json j;
     j["type"] = "stroke";
     j["stroke"] = stroke;
@@ -158,7 +157,7 @@ void WebSocketServer::broadcastStroke(const Stroke& stroke) {
     }
 }
 
-void WebSocketServer::broadcastBoard(const Board& board) {
+void UwsWebSocketServer::broadcastBoard(const Board& board) {
     json j;
     j["type"] = "board";
     j["strokes"] = board.getStrokes();
@@ -173,7 +172,7 @@ void WebSocketServer::broadcastBoard(const Board& board) {
     }
 }
 
-void WebSocketServer::broadcastPermission(bool allowed) {
+void UwsWebSocketServer::broadcastPermission(bool allowed) {
     json j;
     j["type"] = "permission";
     j["allowed"] = allowed;

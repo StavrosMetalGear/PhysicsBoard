@@ -56,49 +56,36 @@ add_library(implot_lib STATIC
 target_include_directories(implot_lib PUBLIC ${implot_SOURCE_DIR})
 target_link_libraries(implot_lib PUBLIC imgui_lib)
 
-# uWebSockets
+# zlib
 FetchContent_Declare(
-    uwebsockets
-    GIT_REPOSITORY https://github.com/uNetworking/uWebSockets.git
-    GIT_TAG        v20.62.0
-    GIT_SUBMODULES uSockets
+    zlib
+    GIT_REPOSITORY https://github.com/madler/zlib.git
+    GIT_TAG        v1.3.1
 )
-FetchContent_MakeAvailable(uwebsockets)
+FetchContent_MakeAvailable(zlib)
 
-set(USOCKETS_DIR ${uwebsockets_SOURCE_DIR}/uSockets/src)
+# nlohmann/json
+FetchContent_Declare(
+    nlohmann_json
+    GIT_REPOSITORY https://github.com/nlohmann/json.git
+    GIT_TAG        v3.11.3
+)
+FetchContent_MakeAvailable(nlohmann_json)
 
-# --- Platform-specific uSockets backend selection ---
-if(WIN32)
-    message(STATUS "Configuring uSockets for Windows with ASIO backend")
+find_package(OpenGL REQUIRED)
 
-    # Your local Boost superproject checkout
-    set(BOOST_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/boost/third_party/boost")
-    file(GLOB BOOST_INCLUDE_DIRS "${BOOST_ROOT}/libs/*/include")
-
-    add_library(usockets STATIC
-        ${USOCKETS_DIR}/context.c
-        ${USOCKETS_DIR}/loop.c
-        ${USOCKETS_DIR}/socket.c
-        ${USOCKETS_DIR}/udp.c
-        ${USOCKETS_DIR}/bsd.c
-        ${USOCKETS_DIR}/eventing/asio.cpp
+# Only fetch/build uWebSockets on UNIX
+if(UNIX)
+    FetchContent_Declare(
+        uwebsockets
+        GIT_REPOSITORY https://github.com/uNetworking/uWebSockets.git
+        GIT_TAG        v20.62.0
+        GIT_SUBMODULES uSockets
     )
+    FetchContent_MakeAvailable(uwebsockets)
 
-    target_include_directories(usockets PUBLIC
-        ${USOCKETS_DIR}
-        ${BOOST_INCLUDE_DIRS}
-    )
+    set(USOCKETS_DIR ${uwebsockets_SOURCE_DIR}/uSockets/src)
 
-    target_compile_definitions(usockets PRIVATE
-        LIBUS_USE_ASIO
-        LIBUS_NO_SSL
-    )
-
-    target_link_libraries(usockets PUBLIC
-        ws2_32
-    )
-
-elseif(UNIX)
     message(STATUS "Configuring uSockets for UNIX/POSIX with epoll backend")
 
     add_library(usockets STATIC
@@ -118,30 +105,9 @@ elseif(UNIX)
         LIBUS_USE_EPOLL
         LIBUS_NO_SSL
     )
-
-else()
-    message(FATAL_ERROR "Unsupported platform for manual uSockets setup")
 endif()
 
-# zlib
-FetchContent_Declare(
-    zlib
-    GIT_REPOSITORY https://github.com/madler/zlib.git
-    GIT_TAG        v1.3.1
-)
-FetchContent_MakeAvailable(zlib)
-
-# nlohmann/json
-FetchContent_Declare(
-    nlohmann_json
-    GIT_REPOSITORY https://github.com/nlohmann/json.git
-    GIT_TAG        v3.11.3
-)
-FetchContent_MakeAvailable(nlohmann_json)
-
-find_package(OpenGL REQUIRED)
-
-set(SOURCES
+set(COMMON_SOURCES
     main.cpp
     BoardApp.cpp
     Board.cpp
@@ -151,10 +117,9 @@ set(SOURCES
     ProjectileSimulator.cpp
     PhysicsToolbox.cpp
     BoardAppWebSocket.cpp
-    WebSocketServer.cpp
 )
 
-set(HEADERS
+set(COMMON_HEADERS
     BoardApp.h
     Board.h
     FunctionPlotter.h
@@ -162,20 +127,43 @@ set(HEADERS
     NetworkSession.h
     ProjectileSimulator.h
     PhysicsToolbox.h
-    WebSocketServer.h
-)
-
-add_executable(PhysicsBoard ${SOURCES} ${HEADERS})
-
-target_include_directories(PhysicsBoard PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${uwebsockets_SOURCE_DIR}/src
-    ${uwebsockets_SOURCE_DIR}/uSockets/src
+    IWebSocketServer.h
 )
 
 if(WIN32)
+    set(PLATFORM_SOURCES
+        WinWebSocketServer.cpp
+    )
+    set(PLATFORM_HEADERS
+        WinWebSocketServer.h
+    )
+elseif(UNIX)
+    set(PLATFORM_SOURCES
+        UwsWebSocketServer.cpp
+    )
+    set(PLATFORM_HEADERS
+        UwsWebSocketServer.h
+    )
+else()
+    message(FATAL_ERROR "Unsupported platform")
+endif()
+
+add_executable(
+    PhysicsBoard
+    ${COMMON_SOURCES}
+    ${COMMON_HEADERS}
+    ${PLATFORM_SOURCES}
+    ${PLATFORM_HEADERS}
+)
+
+target_include_directories(PhysicsBoard PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+if(UNIX)
     target_include_directories(PhysicsBoard PRIVATE
-        ${BOOST_INCLUDE_DIRS}
+        ${uwebsockets_SOURCE_DIR}/src
+        ${uwebsockets_SOURCE_DIR}/uSockets/src
     )
 endif()
 
@@ -185,15 +173,12 @@ target_link_libraries(PhysicsBoard PRIVATE
     OpenGL::GL
     zlib
     nlohmann_json::nlohmann_json
-    usockets
 )
 
-if(MSVC)
+if(WIN32)
     target_compile_definitions(PhysicsBoard PRIVATE
         _USE_MATH_DEFINES
         NOMINMAX
-        LIBUS_USE_ASIO
-        LIBUS_NO_SSL
         _CRT_SECURE_NO_WARNINGS
     )
     target_compile_options(PhysicsBoard PRIVATE /W3)
@@ -205,9 +190,5 @@ elseif(UNIX)
         LIBUS_NO_SSL
     )
     target_compile_options(PhysicsBoard PRIVATE -Wall -Wextra -pedantic)
-
-else()
-    target_compile_definitions(PhysicsBoard PRIVATE
-        LIBUS_NO_SSL
-    )
+    target_link_libraries(PhysicsBoard PRIVATE usockets)
 endif()
