@@ -361,3 +361,27 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# CMake
+build/
+build-linux/
+out/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+
+# Ninja
+.ninja_deps
+.ninja_log
+
+# Visual Studio
+.vs/
+*.vcxproj.user
+*.suo
+
+# Binaries
+*.exe
+*.lib
+*.dll
+*.pdb
+*.obj
