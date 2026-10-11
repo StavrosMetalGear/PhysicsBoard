@@ -746,8 +746,8 @@ void BoardApp::renderStroke(const Stroke& stroke, ImDrawList* drawList) {
             float r = (rx + ry) * 0.5f;
             drawList->AddCircle(a, r, stroke.color, 64, thick);
             // simple latitude/longitude lines
-            drawList->AddEllipse(a, r * 0.9f, r * 0.5f, stroke.color, 32, thick * 0.6f);
-            drawList->AddEllipse(a, r * 0.5f, r * 0.9f, stroke.color, 32, thick * 0.6f);
+            drawList->AddEllipse(a, ImVec2(r * 0.9f, r * 0.5f), stroke.color, 32, thick * 0.6f);
+            drawList->AddEllipse(a, ImVec2(r * 0.5f, r * 0.9f), stroke.color, 32, thick * 0.6f);
         }
         break;
     }
@@ -765,7 +765,7 @@ void BoardApp::renderStroke(const Stroke& stroke, ImDrawList* drawList) {
             ImVec2 center = { (baseL.x + baseR.x) * 0.5f, baseL.y };
             float rx = std::abs(baseR.x - baseL.x) * 0.5f;
             float ry = rx * 0.35f;
-            drawList->AddEllipse(center, rx, ry, stroke.color, 32, thick);
+            drawList->AddEllipse(center, ImVec2(rx, ry), stroke.color, 32, thick);
         }
         break;
     }

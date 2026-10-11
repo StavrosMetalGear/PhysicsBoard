@@ -2,7 +2,9 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#if defined(ANDROID) || defined(USE_SDL)
 #include "imgui_impl_sdl.h"
+#endif
 #include "implot.h"
 
 #include <GLFW/glfw3.h>
@@ -50,8 +52,12 @@ int main() {
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
-    // also initialize SDL backend support (no-op on desktop if SDL not used)
-    ImGui_ImplSDL2_InitForOpenGL(nullptr, nullptr);
+#if defined(ANDROID) || defined(USE_SDL)
+    // If SDL backend is available on this build, initialize it as well (desktop builds without SDL skip this)
+    // Note: when using SDL on desktop, the SDL backend init should be called with the actual SDL window/context.
+    // Here we only compile the call when SDL is enabled.
+    // ImGui_ImplSDL2_InitForOpenGL(window, gl_context); // call in SDL-based main instead
+#endif
 
     // ── Application ─────────────────────────────────────────────────────
     BoardApp app;
