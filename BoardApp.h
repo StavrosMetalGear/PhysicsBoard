@@ -102,6 +102,11 @@ private:
     void     finishStroke();
     void     handleEraser(const ImVec2& mousePos);
 
+    // Touch helpers (Android / mobile)
+    void     handleTouchDown(const ImVec2& pos, int id);
+    void     handleTouchMove(const ImVec2& pos, int id);
+    void     handleTouchUp(const ImVec2& pos, int id);
+
     // Network helpers
     void pollNetwork();
 };

@@ -20,6 +20,15 @@ enum class ToolType {
     Eraser,
     Text,
     Ruler
+    ,
+    // 2D shape
+    Triangle,
+    // 3D / geometric shapes (rendered as 2D projections/wireframes)
+    Cube,
+    Sphere,
+    Pyramid,
+    Rhombus,
+    Cone
 };
 
 enum class BackgroundStyle {

@@ -53,6 +53,42 @@ BoardApp::BoardApp()
     m_boards[4].setBackgroundStyle(BackgroundStyle::Plain);
 }
 
+// --- Touch input helpers (placeholders) -------------------------------------
+void BoardApp::handleTouchDown(const ImVec2& pos, int id) {
+    // Map single touch to left mouse click for drawing
+    Point p = screenToBoard(pos);
+    if (m_currentTool == ToolType::Eraser) {
+        handleEraser(pos);
+        return;
+    }
+    if (m_currentTool == ToolType::Text) return; // text requires keyboard/IME
+
+    m_drawing = true;
+    m_currentStroke = {};
+    m_currentStroke.tool = m_currentTool;
+    m_currentStroke.color = m_packedColor;
+    m_currentStroke.thickness = m_thickness;
+    m_currentStroke.points.push_back(p);
+}
+
+void BoardApp::handleTouchMove(const ImVec2& pos, int id) {
+    if (!m_drawing) return;
+    Point p = screenToBoard(pos);
+    if (m_currentTool == ToolType::Pencil) {
+        m_currentStroke.points.push_back(p);
+    } else {
+        if (m_currentStroke.points.size() < 2)
+            m_currentStroke.points.push_back(p);
+        else
+            m_currentStroke.points[1] = p;
+    }
+}
+
+void BoardApp::handleTouchUp(const ImVec2& pos, int id) {
+    if (!m_drawing) return;
+    finishStroke();
+}
+
 uint32_t BoardApp::packColor() const {
     uint8_t r = static_cast<uint8_t>(m_toolColor[0] * 255.0f);
     uint8_t g = static_cast<uint8_t>(m_toolColor[1] * 255.0f);
@@ -202,9 +238,11 @@ void BoardApp::renderToolbar() {
     ImGui::BeginChild("##Toolbar", ImVec2(-1, 50), true);
 
     const char* toolNames[] = {
-        "Pencil", "Line", "Rectangle", "Circle", "Arrow", "Eraser", "Text", "Ruler"
+        "Pencil", "Line", "Rectangle", "Circle", "Arrow", "Eraser", "Text", "Ruler",
+        "Triangle", "Cube", "Sphere", "Pyramid", "Rhombus", "Cone"
     };
-    for (int i = 0; i < 8; ++i) {
+    const int TOOL_COUNT = sizeof(toolNames) / sizeof(toolNames[0]);
+    for (int i = 0; i < TOOL_COUNT; ++i) {
         if (i > 0) ImGui::SameLine();
         bool selected = (static_cast<int>(m_currentTool) == i);
         if (selected) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.3f, 0.6f, 1.0f, 1.0f));
@@ -212,6 +250,8 @@ void BoardApp::renderToolbar() {
             m_currentTool = static_cast<ToolType>(i);
         }
         if (selected) ImGui::PopStyleColor();
+        // Wrap to next line every 8 buttons for toolbar width
+        if ((i + 1) % 8 == 0) ImGui::NewLine();
     }
 
     ImGui::SameLine(0, 20);
@@ -566,6 +606,115 @@ void BoardApp::renderStroke(const Stroke& stroke, ImDrawList* drawList) {
             ImVec2 b = boardToScreen(stroke.points[1]);
             float radius = std::sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
             drawList->AddCircle(a, radius, stroke.color, 64, thick);
+        }
+        break;
+    }
+    case ToolType::Triangle: {
+        if (stroke.points.size() >= 2) {
+            ImVec2 a = boardToScreen(stroke.points[0]);
+            ImVec2 b = boardToScreen(stroke.points[1]);
+            // Equilateral triangle with base a-b
+            ImVec2 mid = {(a.x + b.x) * 0.5f, (a.y + b.y) * 0.5f};
+            float dx = b.x - a.x;
+            float dy = b.y - a.y;
+            // perpendicular vector
+            ImVec2 perp = {-dy, dx};
+            float len = std::sqrt(perp.x * perp.x + perp.y * perp.y);
+            if (len > 0.0f) {
+                perp.x /= len; perp.y /= len;
+            }
+            float height = std::sqrt(dx*dx + dy*dy) * 0.866f; // approx
+            ImVec2 c = { mid.x + perp.x * height, mid.y + perp.y * height };
+            drawList->AddTriangle(a, b, c, stroke.color, thick);
+        }
+        break;
+    }
+    case ToolType::Rhombus: {
+        if (stroke.points.size() >= 2) {
+            ImVec2 a = boardToScreen(stroke.points[0]);
+            ImVec2 b = boardToScreen(stroke.points[1]);
+            ImVec2 mid = {(a.x + b.x) * 0.5f, (a.y + b.y) * 0.5f};
+            ImVec2 half = {(b.x - a.x) * 0.5f, (b.y - a.y) * 0.5f};
+            ImVec2 perp = {-half.y, half.x};
+            ImVec2 p0 = { mid.x + half.x, mid.y + half.y };
+            ImVec2 p1 = { mid.x + perp.x, mid.y + perp.y };
+            ImVec2 p2 = { mid.x - half.x, mid.y - half.y };
+            ImVec2 p3 = { mid.x - perp.x, mid.y - perp.y };
+            drawList->AddPolyline(&p0, 4, stroke.color, true, thick);
+        }
+        break;
+    }
+    case ToolType::Cube: {
+        if (stroke.points.size() >= 2) {
+            ImVec2 a = boardToScreen(stroke.points[0]);
+            ImVec2 b = boardToScreen(stroke.points[1]);
+            // Draw simple isometric cube projection
+            ImVec2 size = { (b.x - a.x), (b.y - a.y) };
+            ImVec2 p0 = a;
+            ImVec2 p1 = { a.x + size.x, a.y };
+            ImVec2 p2 = { a.x + size.x, a.y + size.y };
+            ImVec2 p3 = { a.x, a.y + size.y };
+            ImVec2 offset = { -size.x * 0.3f, -size.y * 0.3f };
+            ImVec2 q0 = { p0.x + offset.x, p0.y + offset.y };
+            ImVec2 q1 = { p1.x + offset.x, p1.y + offset.y };
+            ImVec2 q2 = { p2.x + offset.x, p2.y + offset.y };
+            ImVec2 q3 = { p3.x + offset.x, p3.y + offset.y };
+            // Front face
+            drawList->AddRect(p0, p2, stroke.color, 0.0f, 0, thick);
+            // Back face
+            drawList->AddRect(q0, q2, stroke.color, 0.0f, 0, thick);
+            // Connectors
+            drawList->AddLine(p0, q0, stroke.color, thick);
+            drawList->AddLine(p1, q1, stroke.color, thick);
+            drawList->AddLine(p2, q2, stroke.color, thick);
+            drawList->AddLine(p3, q3, stroke.color, thick);
+        }
+        break;
+    }
+    case ToolType::Pyramid: {
+        if (stroke.points.size() >= 2) {
+            ImVec2 a = boardToScreen(stroke.points[0]);
+            ImVec2 b = boardToScreen(stroke.points[1]);
+            ImVec2 base1 = a;
+            ImVec2 base2 = { b.x, a.y };
+            ImVec2 base3 = { (a.x + b.x) * 0.5f, b.y };
+            ImVec2 apex = { (a.x + b.x) * 0.5f, a.y - (b.y - a.y) * 0.5f };
+            drawList->AddTriangle(base1, base2, base3, stroke.color, thick);
+            drawList->AddLine(apex, base1, stroke.color, thick);
+            drawList->AddLine(apex, base2, stroke.color, thick);
+            drawList->AddLine(apex, base3, stroke.color, thick);
+        }
+        break;
+    }
+    case ToolType::Sphere: {
+        if (stroke.points.size() >= 2) {
+            ImVec2 a = boardToScreen(stroke.points[0]);
+            ImVec2 b = boardToScreen(stroke.points[1]);
+            float rx = std::abs(b.x - a.x);
+            float ry = std::abs(b.y - a.y);
+            float r = (rx + ry) * 0.5f;
+            drawList->AddCircle(a, r, stroke.color, 64, thick);
+            // simple latitude/longitude lines
+            drawList->AddEllipse(a, r * 0.9f, r * 0.5f, stroke.color, 32, thick * 0.6f);
+            drawList->AddEllipse(a, r * 0.5f, r * 0.9f, stroke.color, 32, thick * 0.6f);
+        }
+        break;
+    }
+    case ToolType::Cone: {
+        if (stroke.points.size() >= 2) {
+            ImVec2 a = boardToScreen(stroke.points[0]);
+            ImVec2 b = boardToScreen(stroke.points[1]);
+            ImVec2 baseL = { b.x, b.y };
+            ImVec2 baseR = { a.x, b.y };
+            ImVec2 apex = { (a.x + b.x) * 0.5f, a.y };
+            drawList->AddLine(baseL, baseR, stroke.color, thick);
+            drawList->AddLine(apex, baseL, stroke.color, thick);
+            drawList->AddLine(apex, baseR, stroke.color, thick);
+            // base ellipse
+            ImVec2 center = { (baseL.x + baseR.x) * 0.5f, baseL.y };
+            float rx = std::abs(baseR.x - baseL.x) * 0.5f;
+            float ry = rx * 0.35f;
+            drawList->AddEllipse(center, rx, ry, stroke.color, 32, thick);
         }
         break;
     }

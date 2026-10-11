@@ -2,6 +2,7 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "imgui_impl_sdl.h"
 #include "implot.h"
 
 #include <GLFW/glfw3.h>
@@ -49,6 +50,8 @@ int main() {
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
+    // also initialize SDL backend support (no-op on desktop if SDL not used)
+    ImGui_ImplSDL2_InitForOpenGL(nullptr, nullptr);
 
     // ── Application ─────────────────────────────────────────────────────
     BoardApp app;

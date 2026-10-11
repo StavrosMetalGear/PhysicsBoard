@@ -6,17 +6,21 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(FetchContent)
 
-# GLFW
-FetchContent_Declare(
-    glfw
-    GIT_REPOSITORY https://github.com/glfw/glfw.git
-    GIT_TAG        3.4
-)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_DOCS     OFF CACHE BOOL "" FORCE)
-set(GLFW_INSTALL        OFF CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(glfw)
+option(USE_SDL "Enable SDL2 backend and builds (for Android/mobile)" OFF)
+
+# GLFW (desktop only)
+if(NOT ANDROID)
+    FetchContent_Declare(
+        glfw
+        GIT_REPOSITORY https://github.com/glfw/glfw.git
+        GIT_TAG        3.4
+    )
+    set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_DOCS     OFF CACHE BOOL "" FORCE)
+    set(GLFW_INSTALL        OFF CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(glfw)
+endif()
 
 # Dear ImGui
 FetchContent_Declare(
@@ -26,20 +30,41 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(imgui)
 
+set(IMGUI_BACKENDS)
+list(APPEND IMGUI_BACKENDS ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp)
+if(NOT ANDROID)
+    list(APPEND IMGUI_BACKENDS ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp)
+endif()
+if(ANDROID OR USE_SDL)
+    list(APPEND IMGUI_BACKENDS ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl.cpp)
+endif()
+
 add_library(imgui_lib STATIC
     ${imgui_SOURCE_DIR}/imgui.cpp
     ${imgui_SOURCE_DIR}/imgui_demo.cpp
     ${imgui_SOURCE_DIR}/imgui_draw.cpp
     ${imgui_SOURCE_DIR}/imgui_tables.cpp
     ${imgui_SOURCE_DIR}/imgui_widgets.cpp
-    ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
-    ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+    ${IMGUI_BACKENDS}
 )
 target_include_directories(imgui_lib PUBLIC
     ${imgui_SOURCE_DIR}
     ${imgui_SOURCE_DIR}/backends
 )
-target_link_libraries(imgui_lib PUBLIC glfw)
+if(NOT ANDROID)
+    target_link_libraries(imgui_lib PUBLIC glfw)
+endif()
+
+# If SDL is requested (Android or explicitly), fetch SDL2 and link where needed
+if(ANDROID OR USE_SDL)
+    FetchContent_Declare(
+        sdl2
+        GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+        GIT_TAG release-2.28.6
+    )
+    FetchContent_MakeAvailable(sdl2)
+    # imgui_impl_sdl.cpp will use SDL2; link SDL2 to final target when needed
+endif()
 
 # ImPlot
 FetchContent_Declare(
@@ -72,7 +97,12 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(nlohmann_json)
 
-find_package(OpenGL REQUIRED)
+if(NOT ANDROID)
+    find_package(OpenGL REQUIRED)
+else()
+    # On Android we'll link against OpenGLES provided by the NDK
+    find_library(GLESv2_LIB GLESv2)
+endif()
 
 # Only fetch/build uWebSockets on UNIX
 if(UNIX)
@@ -118,6 +148,14 @@ set(COMMON_SOURCES
     PhysicsToolbox.cpp
     BoardAppWebSocket.cpp
 )
+
+if(ANDROID)
+    # Android uses a separate main that integrates with SDL and OpenGLES
+    list(APPEND COMMON_SOURCES main_android.cpp)
+elseif(USE_SDL)
+    # Desktop builds can also opt into SDL main (not added by default)
+    # list(APPEND COMMON_SOURCES main_android.cpp)
+endif()
 
 set(COMMON_HEADERS
     BoardApp.h
@@ -170,10 +208,15 @@ endif()
 target_link_libraries(PhysicsBoard PRIVATE
     imgui_lib
     implot_lib
-    OpenGL::GL
+    $<$<BOOL:${ANDROID}>:${GLESv2_LIB}> 
+    $<$<NOT:$<BOOL:${ANDROID}>>:OpenGL::GL>
     zlib
     nlohmann_json::nlohmann_json
 )
+
+if(ANDROID OR USE_SDL)
+    target_link_libraries(PhysicsBoard PRIVATE SDL2::SDL2)
+endif()
 
 if(WIN32)
     target_compile_definitions(PhysicsBoard PRIVATE
