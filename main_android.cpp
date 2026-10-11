@@ -7,7 +7,8 @@
 #include <SDL_opengles2.h>
 #include <cstdio>
 
-int main(int argc, char** argv)
+// SDL on Android expects SDL_main to be defined by the native library.
+int SDL_main(int argc, char** argv)
 {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS) != 0) {
         std::fprintf(stderr, "Failed to initialize SDL: %s\n", SDL_GetError());

@@ -1,0 +1,19 @@
+// Top-level build file for the Android project placeholder. Replace with SDL template's build.gradle when copying the full android-project template.
+// This placeholder is intentionally minimal.
+
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.2.0'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
