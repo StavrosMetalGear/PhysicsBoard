@@ -30,6 +30,17 @@ public:
 
     BoardApp();
 
+    // Text input helpers (IME)
+    ToolType getCurrentTool() const;
+    void startTextInputAt(const ImVec2& screenPos);
+    void appendTextInput(const char* utf8);
+    void stopTextInput(bool commit);
+    bool isTextInputActive() const;
+
+    // Mobile helpers
+    void addPan(float dx, float dy);
+    void scaleZoom(float factor, const ImVec2& center);
+
     // Set GLFW window handle (needed for overlay mode)
     void setWindow(GLFWwindow* window);
 

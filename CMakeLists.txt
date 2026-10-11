@@ -186,13 +186,25 @@ else()
     message(FATAL_ERROR "Unsupported platform")
 endif()
 
-add_executable(
-    PhysicsBoard
-    ${COMMON_SOURCES}
-    ${COMMON_HEADERS}
-    ${PLATFORM_SOURCES}
-    ${PLATFORM_HEADERS}
-)
+if(ANDROID)
+    add_library(
+        PhysicsBoard SHARED
+        ${COMMON_SOURCES}
+        ${COMMON_HEADERS}
+        ${PLATFORM_SOURCES}
+        ${PLATFORM_HEADERS}
+    )
+    # Ensure position independent code for shared library
+    set_target_properties(PhysicsBoard PROPERTIES POSITION_INDEPENDENT_CODE ON)
+else()
+    add_executable(
+        PhysicsBoard
+        ${COMMON_SOURCES}
+        ${COMMON_HEADERS}
+        ${PLATFORM_SOURCES}
+        ${PLATFORM_HEADERS}
+    )
+endif()
 
 target_include_directories(PhysicsBoard PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -208,11 +220,15 @@ endif()
 target_link_libraries(PhysicsBoard PRIVATE
     imgui_lib
     implot_lib
-    $<$<BOOL:${ANDROID}>:${GLESv2_LIB}> 
-    $<$<NOT:$<BOOL:${ANDROID}>>:OpenGL::GL>
     zlib
     nlohmann_json::nlohmann_json
 )
+
+if(ANDROID)
+    target_link_libraries(PhysicsBoard PRIVATE ${GLESv2_LIB})
+else()
+    target_link_libraries(PhysicsBoard PRIVATE OpenGL::GL)
+endif()
 
 if(ANDROID OR USE_SDL)
     target_link_libraries(PhysicsBoard PRIVATE SDL2::SDL2)

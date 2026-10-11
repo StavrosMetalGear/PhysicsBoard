@@ -53,6 +53,43 @@ BoardApp::BoardApp()
     m_boards[4].setBackgroundStyle(BackgroundStyle::Plain);
 }
 
+ToolType BoardApp::getCurrentTool() const { return m_currentTool; }
+
+void BoardApp::startTextInputAt(const ImVec2& screenPos) {
+    // Focus UI and set text input position; here we simply open IME via SDL/OS layer
+    // The platform layer should call SDL_StartTextInput() when appropriate.
+    (void)screenPos;
+}
+
+void BoardApp::appendTextInput(const char* utf8) {
+    // Append received UTF-8 text into the current text buffer when Text tool is active
+    if (m_currentTool == ToolType::Text) {
+        strncat(m_textInput, utf8, sizeof(m_textInput) - strlen(m_textInput) - 1);
+    }
+}
+
+void BoardApp::stopTextInput(bool commit) {
+    if (m_currentTool == ToolType::Text && commit) {
+        if (std::strlen(m_textInput) > 0) {
+            Stroke s;
+            s.tool = ToolType::Text;
+            s.color = m_packedColor;
+            s.thickness = m_thickness;
+            s.text = m_textInput;
+            // Use last touch point for placement; fallback to center
+            Point p = {0,0};
+            if (!m_currentStroke.points.empty()) p = m_currentStroke.points.front();
+            s.points.push_back(p);
+            m_boards[m_activeBoard].addStroke(s);
+            if (m_network.isConnected()) m_network.sendStroke(s);
+        }
+    }
+    // Clear input buffer
+    m_textInput[0] = '\0';
+}
+
+bool BoardApp::isTextInputActive() const { return m_currentTool == ToolType::Text && std::strlen(m_textInput) > 0; }
+
 // --- Touch input helpers (placeholders) -------------------------------------
 void BoardApp::handleTouchDown(const ImVec2& pos, int id) {
     // Map single touch to left mouse click for drawing
@@ -87,6 +124,20 @@ void BoardApp::handleTouchMove(const ImVec2& pos, int id) {
 void BoardApp::handleTouchUp(const ImVec2& pos, int id) {
     if (!m_drawing) return;
     finishStroke();
+}
+
+void BoardApp::addPan(float dx, float dy) {
+    m_panOffset.x += dx / m_zoom;
+    m_panOffset.y += dy / m_zoom;
+}
+
+void BoardApp::scaleZoom(float factor, const ImVec2& center) {
+    float old = m_zoom;
+    m_zoom *= factor;
+    m_zoom = std::clamp(m_zoom, 0.1f, 10.0f);
+    // adjust pan so zoom focuses on center
+    m_panOffset.x = center.x / m_zoom - (center.x / old - m_panOffset.x);
+    m_panOffset.y = center.y / m_zoom - (center.y / old - m_panOffset.y);
 }
 
 uint32_t BoardApp::packColor() const {
